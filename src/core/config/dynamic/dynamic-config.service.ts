@@ -18,6 +18,8 @@ export class DynamicConfigService {
   public async load(): Promise<void> {
     const rows = await this.prisma.config.findMany();
 
+    this.loadDefaults();
+
     for (const row of rows) {
       if (!(row.key in DynamicConfigSchema))
         continue;
@@ -142,4 +144,14 @@ export class DynamicConfigService {
       })),
     );
   };
+
+  private loadDefaults(): void {
+    for (const key of Object.values(DynamicConfig)) {
+      const schema = DynamicConfigSchema[key];
+      const validated = schema.validate(undefined);
+      const value = validated.value as DynamicConfigValue<typeof key>;
+
+      this.cache.set(key, value);
+    }
+  }
 }
