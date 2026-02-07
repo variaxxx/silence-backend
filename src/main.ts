@@ -3,14 +3,15 @@ import fastifyWebsocket from "@fastify/websocket";
 import Fastify, { FastifyBaseLogger } from "fastify";
 import { Container } from "typedi";
 
-import { errorHandler } from "./common/handlers";
+import { errorHandler, joiValidator } from "./common/handlers";
 import { leadingSlashHook } from "./common/hooks/leading-slash";
 import { responseFormattingHook } from "./common/hooks/response-formatting";
 import { AppController } from "./core/app.controller";
-import { TestHandler } from "./core/app.handler";
-import { ConfigService, DynamicConfigService } from "./core/config";
+import { DynamicConfigService } from "./core/config/dynamic";
+import { ConfigService } from "./core/config/env";
 import { Logger } from "./core/logger";
 import { registerControllers } from "./core/register-controllers";
+import { featuresControllers } from "./features";
 import { PrismaService } from "./infra/db/prisma.service";
 
 async function bootstrap(): Promise<void> {
@@ -27,11 +28,12 @@ async function bootstrap(): Promise<void> {
   app.addHook("onRequest", leadingSlashHook);
   app.addHook("preSerialization", responseFormattingHook);
   app.setErrorHandler(errorHandler);
+  app.setValidatorCompiler(joiValidator);
 
   await dynamicConfig.load();
   await prisma.connect();
 
-  registerControllers(app, [AppController, TestHandler]);
+  registerControllers(app, featuresControllers.concat([AppController]));
 
   const port = config.getOrThrow<number>("PORT");
   app.listen({ port }).then(() => {

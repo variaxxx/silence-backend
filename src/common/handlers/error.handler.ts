@@ -11,7 +11,6 @@ export function errorHandler(
   const status = error.statusCode || 500;
   const message = status !== 500 ? error.message : "Internal server error";
   reply.status(status).send({
-    statusCode: status,
     message,
   } as ApiResponse);
 }

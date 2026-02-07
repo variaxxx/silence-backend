@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import { Service } from "typedi";
 
 import { EnvConfig } from "./env.config";
-import { validationSchema } from "./validation.schema";
+import { envSchema } from "./env.schema";
 
 @Service()
 export class ConfigService {
@@ -11,7 +11,7 @@ export class ConfigService {
   constructor() {
     dotenv.config();
 
-    const { value, error } = validationSchema.validate(process.env, {
+    const { value, error } = envSchema.validate(process.env, {
       abortEarly: false,
       convert: true,
       allowUnknown: true,

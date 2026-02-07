@@ -1,22 +1,19 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { Container, Service } from "typedi";
+import { Service } from "typedi";
 
-import { ConfigService } from "../../core/config";
+import { ConfigService } from "../../core/config/env";
 import { Logger } from "../../core/logger";
 import { PrismaClient } from "../../generated/prisma/client";
 
 @Service()
 export class PrismaService extends PrismaClient {
-  private readonly logger: Logger;
-
   constructor(
+    private readonly logger: Logger,
     private readonly configService: ConfigService,
   ) {
     const connectionString = configService.getOrThrow("DATABASE_URL");
     const adapter = new PrismaPg({ connectionString });
     super({ adapter, log: [] });
-
-    this.logger = Container.get(Logger);
   }
 
   async connect(): Promise<void> {

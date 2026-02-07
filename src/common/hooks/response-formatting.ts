@@ -10,7 +10,8 @@ export function responseFormattingHook(
 ): void {
   const response = {
     statusCode: rep.statusCode,
-    data: payload,
+    data: rep.statusCode < 400 ? payload : undefined,
+    message: payload.message ?? undefined,
   } as ApiResponse;
   done(null, response);
 }

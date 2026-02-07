@@ -1,29 +1,37 @@
+import { Schema as JoiSchema } from "joi";
+
 import { HTTP_METHOD, HttpMethod } from "../enums/http-method";
 
 export const ROUTES_KEY = Symbol("routes");
 
-type HttpMethodDecorator = (endpoint?: string) => MethodDecorator;
+type HttpMethodDecorator = (endpoint?: string, options?: HttpMethodOptions) => MethodDecorator;
 
 export interface RouteConfig {
   method: HttpMethod;
   handlerName: symbol | string;
   path: string;
+  schema?: JoiSchema;
+}
+
+export interface HttpMethodOptions {
+  schema?: JoiSchema;
 }
 
 function createMethodDecorator(
   method: HttpMethod,
 ): HttpMethodDecorator {
-  return (endpoint: string = "") => {
+  return (endpoint: string = "", options?: HttpMethodOptions) => {
     return (target: object, propertyKey: symbol | string) => {
       const routes: RouteConfig[] = Reflect.getMetadata(ROUTES_KEY, target.constructor) || [];
 
       const trimmedEndpoint = endpoint.trim();
-      const normalizedEndpoint = trimmedEndpoint === "" ? "" : `/${trimmedEndpoint.replace(/^\/+|\/+$/g, "")}`;
+      const normalizedEndpoint = ["", "/"].includes(trimmedEndpoint) ? "" : `/${trimmedEndpoint.replace(/^\/+|\/+$/g, "")}`;
 
       routes.push({
         method,
         path: normalizedEndpoint,
         handlerName: propertyKey,
+        schema: options?.schema,
       });
 
       Reflect.defineMetadata(ROUTES_KEY, routes, target.constructor);

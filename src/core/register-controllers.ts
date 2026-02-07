@@ -39,6 +39,7 @@ export function registerControllers(
             url,
             method: r.method,
             handler,
+            schema: { body: r.schema },
           });
         } else {
           const meta = handlersMap.get(url);

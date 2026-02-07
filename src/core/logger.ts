@@ -1,7 +1,7 @@
 import pino, { Logger as PinoLogger } from "pino";
-import { Service } from "typedi";
+import Container, { Service } from "typedi";
 
-import { ConfigService } from "./config";
+import { ConfigService } from "./config/env";
 
 @Service()
 export class Logger {
