@@ -17,7 +17,7 @@ export class SettingsController {
   }
 
   @Post("/", {
-    schema: ChangeSettingsSchema,
+    schema: { body: ChangeSettingsSchema },
   })
   async change(
     req: FastifyRequest<{ Body: ChangeSettingsRequest }>,

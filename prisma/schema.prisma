@@ -14,3 +14,36 @@ model Config {
 
   @@map("app_config")
 }
+
+model Game {
+  id Int @id @default(autoincrement())
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  finishedAt DateTime? @map("finished_at")
+
+  status GameStatus @default(WAITING)
+
+  players Player[]
+
+  @@map("games")
+}
+
+model Player {
+  id Int @id @default(autoincrement())
+
+  gameId Int
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  name    String
+  micId   Int    @map("mic_id")
+  strikes Int    @default(0)
+  balance Int    @default(0)
+
+  @@map("players")
+}
+
+enum GameStatus {
+  WAITING
+  RUNNING
+  FINISHED
+}

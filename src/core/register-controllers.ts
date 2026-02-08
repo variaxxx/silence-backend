@@ -3,13 +3,14 @@ import { FastifyInstance, FastifyRequest } from "fastify";
 import { Container } from "typedi";
 import { WebSocket } from "ws";
 
-import { PREFIX_KEY, RouteConfig, ROUTES_KEY, WS_EVENTS_KEY, WS_PREFIX_KEY, WsEventConfig } from "../common/decorators";
+import { EndpointSchemas, PREFIX_KEY, RouteConfig, ROUTES_KEY, WS_EVENTS_KEY, WS_PREFIX_KEY, WsEventConfig } from "../common/decorators";
 import { HTTP_METHOD } from "../common/enums";
 import { WsMessage } from "../common/interfaces";
 
 interface HandlerConfig {
   wsHandler?: any;
   httpHandler?: any;
+  schema?: EndpointSchemas;
 }
 
 export function registerControllers(
@@ -39,7 +40,7 @@ export function registerControllers(
             url,
             method: r.method,
             handler,
-            schema: { body: r.schema },
+            schema: r.schema,
           });
         } else {
           const meta = handlersMap.get(url);
@@ -49,6 +50,7 @@ export function registerControllers(
           handlersMap.set(url, {
             ...meta,
             httpHandler: handler,
+            schema: r.schema,
           });
         }
       }
@@ -128,6 +130,7 @@ export function registerControllers(
           rep.status(404).send();
         }),
         wsHandler: meta.wsHandler,
+        schema: meta.schema?.params ? { params: meta.schema.params } : undefined,
       });
     });
   }

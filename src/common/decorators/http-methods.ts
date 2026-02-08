@@ -10,11 +10,16 @@ export interface RouteConfig {
   method: HttpMethod;
   handlerName: symbol | string;
   path: string;
-  schema?: JoiSchema;
+  schema?: EndpointSchemas;
+}
+
+export interface EndpointSchemas {
+  body?: JoiSchema;
+  params?: JoiSchema;
 }
 
 export interface HttpMethodOptions {
-  schema?: JoiSchema;
+  schema?: EndpointSchemas;
 }
 
 function createMethodDecorator(

@@ -1,5 +1,5 @@
 import pino, { Logger as PinoLogger } from "pino";
-import Container, { Service } from "typedi";
+import { Service } from "typedi";
 
 import { ConfigService } from "./config/env";
 
