@@ -39,6 +39,7 @@ model Player {
   strikes Int    @default(0)
   balance Int    @default(0)
 
+  @@unique([gameId, micId])
   @@map("players")
 }
 

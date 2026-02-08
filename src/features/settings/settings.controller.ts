@@ -21,7 +21,6 @@ export class SettingsController {
   })
   async change(
     req: FastifyRequest<{ Body: ChangeSettingsRequest }>,
-    // rep: FastifyReply,
   ): Promise<SettingsResponse> {
     const body = req.body;
     await this.config.setMany(body);

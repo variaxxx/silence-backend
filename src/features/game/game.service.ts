@@ -99,6 +99,7 @@ export class GameService {
       players: game.players
         ? game.players.map(p => ({
             id: p.id,
+            gameId: game.id,
             balance: p.balance,
             name: p.name,
             micId: p.micId,

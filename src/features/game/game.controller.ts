@@ -1,6 +1,6 @@
 import { FastifyRequest } from "fastify";
 
-import { Controller, Get, Post } from "../../common/decorators";
+import { Controller, Get, HttpCode, Post } from "../../common/decorators";
 import { HttpException } from "../../common/exceptions";
 import { GameIdParamSchema, GameResponse } from "./dto";
 import { GameService } from "./game.service";
@@ -11,6 +11,7 @@ export class GameController {
     private readonly service: GameService,
   ) {}
 
+  @HttpCode(201)
   @Post()
   async create(): Promise<GameResponse> {
     return await this.service.create();

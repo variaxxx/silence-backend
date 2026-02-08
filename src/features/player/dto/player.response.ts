@@ -1,7 +1,8 @@
 export interface PlayerResponse {
   id: number;
-  name: string;
   micId: number;
+  gameId: number;
+  name: string;
   strikes: number;
   balance: number;
 }
