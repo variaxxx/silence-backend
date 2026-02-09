@@ -35,9 +35,10 @@ model Player {
   game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
 
   name    String
-  micId   Int    @map("mic_id")
-  strikes Int    @default(0)
-  balance Int    @default(0)
+  micId   Int          @map("mic_id")
+  strikes Int          @default(0)
+  balance Int          @default(0)
+  status  PlayerStatus @default(ACTIVE)
 
   @@unique([gameId, micId])
   @@map("players")
@@ -47,4 +48,9 @@ enum GameStatus {
   WAITING
   RUNNING
   FINISHED
+}
+
+enum PlayerStatus {
+  ACTIVE
+  KICKED
 }

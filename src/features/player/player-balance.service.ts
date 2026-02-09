@@ -13,26 +13,29 @@ export class PlayerBalanceService {
   ) {}
 
   public async topup(
+    gameId: number,
     playerId: number,
     amount: number,
   ): Promise<PlayerResponse> {
     if (amount < 0)
       throw new HttpException(400, "Top up amount can`t be negative");
 
-    return this.changeBalance(playerId, amount);
+    return this.changeBalance(gameId, playerId, amount);
   }
 
   public async deduct(
+    gameId: number,
     playerId: number,
     amount: number,
   ): Promise<PlayerResponse> {
     if (amount < 0)
       throw new HttpException(400, "Deduct amount can`t be negative");
 
-    return this.changeBalance(playerId, -amount);
+    return this.changeBalance(gameId, playerId, -amount);
   }
 
   private async changeBalance(
+    gameId: number,
     playerId: number,
     amount: number,
   ): Promise<PlayerResponse> {
@@ -41,7 +44,7 @@ export class PlayerBalanceService {
       : { increment: amount };
 
     const player = await this.prisma.player.update({
-      where: { id: playerId },
+      where: { id: playerId, gameId },
       data: { balance },
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
@@ -62,6 +65,7 @@ export class PlayerBalanceService {
       strikes: player.strikes,
       balance: player.balance,
       name: player.name,
+      status: player.status,
     };
   }
 }

@@ -1,9 +1,10 @@
 import { FastifyRequest } from "fastify";
+import Joi from "joi";
 
 import { Controller, Get, HttpCode, Post } from "../../common/decorators";
 import { HttpException } from "../../common/exceptions";
-import { GameIdParamSchema } from "../game/dto";
-import { DeductBalanceRequest, DeductBalanceSchema, PlayerIdParamSchema, PlayerResponse, TopupBalanceRequest, TopupBalanceSchema } from "./dto";
+import { GameIdParam, GameIdParamSchema } from "../game/dto";
+import { DeductBalanceRequest, DeductBalanceSchema, PlayerIdParam, PlayerIdParamSchema, PlayerResponse, TopupBalanceRequest, TopupBalanceSchema } from "./dto";
 import { CreatePlayerRequest, CreatePlayerSchema } from "./dto/create-player.request";
 import { PlayerBalanceService } from "./player-balance.service";
 import { PlayerService } from "./player.service";
@@ -26,15 +27,12 @@ export class PlayerController {
     return await this.playerService.create(gameId, req.body);
   }
 
-  @Get(":playerId", { schema: { params: PlayerIdParamSchema } })
+  @Get(":playerId", { schema: { params: PlayerIdParamSchema.concat(GameIdParamSchema as Joi.ObjectSchema) } })
   async getOne(
-    req: FastifyRequest<{ Params: {
-      playerId: number;
-      gameId: number;
-    }; }>,
+    req: FastifyRequest<{ Params: PlayerIdParam & GameIdParam }>,
   ): Promise<PlayerResponse> {
-    const { playerId } = req.params;
-    const player = await this.playerService.getById(playerId);
+    const { playerId, gameId } = req.params;
+    const player = await this.playerService.getById(gameId, playerId);
 
     if (!player)
       throw new HttpException(404, "Player not found");
@@ -43,35 +41,55 @@ export class PlayerController {
 
   @Post(":playerId/balance/topup", {
     schema: {
-      params: PlayerIdParamSchema,
+      params: PlayerIdParamSchema.concat(GameIdParamSchema as Joi.ObjectSchema),
       body: TopupBalanceSchema,
     },
   })
   async topup(
     req: FastifyRequest<{
-      Params: { playerId: number };
+      Params: PlayerIdParam & GameIdParam;
       Body: TopupBalanceRequest;
     }>,
   ): Promise<PlayerResponse> {
-    const { playerId } = req.params;
+    const { playerId, gameId } = req.params;
     const { amount } = req.body;
-    return await this.balanceService.topup(playerId, amount);
+    return await this.balanceService.topup(gameId, playerId, amount);
   }
 
   @Post(":playerId/balance/deduct", {
     schema: {
-      params: PlayerIdParamSchema,
+      params: PlayerIdParamSchema.concat(GameIdParamSchema as Joi.ObjectSchema),
       body: DeductBalanceSchema,
     },
   })
   async deduct(
     req: FastifyRequest<{
-      Params: { playerId: number };
+      Params: PlayerIdParam & GameIdParam;
       Body: DeductBalanceRequest;
     }>,
   ): Promise<PlayerResponse> {
-    const { playerId } = req.params;
+    const { playerId, gameId } = req.params;
     const { amount } = req.body;
-    return await this.balanceService.deduct(playerId, amount);
+    return await this.balanceService.deduct(gameId, playerId, amount);
+  }
+
+  @Post(":playerId/kick", {
+    schema: { params: PlayerIdParamSchema.concat(GameIdParamSchema as Joi.ObjectSchema) },
+  })
+  async kick(
+    req: FastifyRequest<{ Params: PlayerIdParam & GameIdParam }>,
+  ): Promise<PlayerResponse> {
+    const { gameId, playerId } = req.params;
+    return await this.playerService.kick(gameId, playerId);
+  }
+
+  @Post(":playerId/restore", {
+    schema: { params: PlayerIdParamSchema.concat(GameIdParamSchema as Joi.ObjectSchema) },
+  })
+  async restore(
+    req: FastifyRequest<{ Params: PlayerIdParam & GameIdParam }>,
+  ): Promise<PlayerResponse> {
+    const { gameId, playerId } = req.params;
+    return await this.playerService.restore(gameId, playerId);
   }
 }

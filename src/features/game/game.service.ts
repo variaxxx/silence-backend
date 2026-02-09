@@ -100,6 +100,7 @@ export class GameService {
         ? game.players.map(p => ({
             id: p.id,
             gameId: game.id,
+            status: p.status,
             balance: p.balance,
             name: p.name,
             micId: p.micId,

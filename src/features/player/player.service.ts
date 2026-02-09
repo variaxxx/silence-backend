@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 
 import { HttpException } from "../../common/exceptions";
-import { Prisma } from "../../generated/prisma/client";
+import { $Enums, Prisma } from "../../generated/prisma/client";
 import { PrismaService } from "../../infra/db/prisma.service";
 import { PrismaQueryError } from "../../shared/enums";
 import { PlayerResponse } from "./dto";
@@ -35,14 +35,46 @@ export class PlayerService {
   }
 
   public async getById(
+    gameId: number,
     id: number,
   ): Promise<PlayerResponse | null> {
     const player = await this.prisma.player.findUnique({
-      where: { id },
+      where: { id, gameId },
     });
 
     if (!player)
       return null;
+    return this.toResponse(player);
+  }
+
+  public async kick(
+    gameId: number,
+    playerId: number,
+  ): Promise<PlayerResponse> {
+    return this.changeStatus(gameId, playerId, "KICKED");
+  }
+
+  public async restore(
+    gameId: number,
+    playerId: number,
+  ): Promise<PlayerResponse> {
+    return this.changeStatus(gameId, playerId, "ACTIVE");
+  }
+
+  private async changeStatus(
+    gameId: number,
+    playerId: number,
+    status: $Enums.PlayerStatus,
+  ): Promise<PlayerResponse> {
+    const player = await this.prisma.player.update({
+      where: { id: playerId, gameId },
+      data: { status },
+    }).catch((e) => {
+      if (e.code === PrismaQueryError.RecordsNotFound)
+        throw new HttpException(404, "Player not found");
+      throw e;
+    });
+
     return this.toResponse(player);
   }
 
@@ -56,6 +88,7 @@ export class PlayerService {
       strikes: player.strikes,
       balance: player.balance,
       name: player.name,
+      status: player.status,
     };
   }
 }
