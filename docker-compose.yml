@@ -17,5 +17,25 @@ services:
     ports:
       - "5433:5432"
 
+  server:
+    container_name: silence-backend
+    build: .
+    depends_on:
+      - postgres
+    env_file:
+      - .env.production
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+
 networks:
   backend:

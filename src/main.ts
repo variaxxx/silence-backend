@@ -36,7 +36,7 @@ async function bootstrap(): Promise<void> {
   registerControllers(app, featuresControllers.concat([AppController]));
 
   const port = config.getOrThrow<number>("PORT");
-  app.listen({ port }).then(() => {
+  app.listen({ port, host: "0.0.0.0" }).then(() => {
     app.log.info("Application started");
   });
 }
