@@ -1,6 +1,6 @@
 import { Service } from "typedi";
 
-export const WS_PREFIX_KEY = Symbol("ws_prefix");
+import { WS_PREFIX_KEY } from "../metadata";
 
 export function WsHandler(prefix: string = ""): ClassDecorator {
   return (target: object) => {

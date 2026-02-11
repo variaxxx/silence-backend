@@ -5,7 +5,7 @@ import { ConfigService } from "./config/env";
 
 @Service()
 export class Logger {
-  public readonly log: PinoLogger;
+  public log!: PinoLogger;
 
   constructor(
     private readonly config: ConfigService,

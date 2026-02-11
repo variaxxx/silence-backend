@@ -1,8 +1,7 @@
 import { Schema as JoiSchema } from "joi";
 
 import { HTTP_METHOD, HttpMethod } from "../enums/http-method";
-
-export const ROUTES_KEY = Symbol("routes");
+import { ROUTES_KEY } from "../metadata";
 
 type HttpMethodDecorator = (endpoint?: string, options?: HttpMethodOptions) => MethodDecorator;
 

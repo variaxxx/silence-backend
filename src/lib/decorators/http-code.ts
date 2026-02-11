@@ -1,4 +1,4 @@
-export const HTTP_STATUS_KEY = Symbol("httpStatus");
+import { HTTP_STATUS_KEY } from "../metadata";
 
 export function HttpCode(
   status: number,

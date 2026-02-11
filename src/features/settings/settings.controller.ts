@@ -1,9 +1,8 @@
 import { FastifyRequest } from "fastify";
 
-import { Controller, Get, Post } from "../../common/decorators";
-import { DynamicConfigService } from "../../core/config/dynamic/dynamic-config.service";
-import { ChangeSettingsRequest, ChangeSettingsSchema } from "./dto/change-settings.request";
-import { SettingsResponse } from "./dto/settings.response";
+import { DynamicConfigService } from "../../core/config/dynamic";
+import { Controller, Get, Post } from "../../lib/decorators";
+import { ChangeSettingsRequest, ChangeSettingsSchema, SettingsResponse } from "./dto";
 
 @Controller("settings")
 export class SettingsController {

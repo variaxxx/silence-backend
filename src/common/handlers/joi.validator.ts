@@ -1,7 +1,7 @@
 import { FastifySchemaCompiler } from "fastify";
-import { Schema as JoiSchema } from "joi";
+import Joi from "joi";
 
-export const joiValidator: FastifySchemaCompiler<JoiSchema> = ({ schema }) => {
+export const joiValidator: FastifySchemaCompiler<Joi.Schema> = ({ schema }) => {
   return (data): any => {
     try {
       const { error, value } = schema.validate(data);

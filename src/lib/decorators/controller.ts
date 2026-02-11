@@ -1,6 +1,6 @@
 import { Service } from "typedi";
 
-export const PREFIX_KEY = Symbol("prefix");
+import { PREFIX_KEY } from "../metadata";
 
 export function Controller(prefix: string = ""): ClassDecorator {
   return (target: object) => {

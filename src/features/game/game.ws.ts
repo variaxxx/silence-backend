@@ -1,5 +1,5 @@
-import { OnConnect, OnEvent, WsHandler } from "../../common/decorators";
-import { WebSocket } from "../../common/interfaces";
+import { OnConnect, OnEvent, WsHandler } from "../../lib/decorators";
+import { WebSocket } from "../../lib/interfaces";
 
 @WsHandler("game")
 export class GameWsHandler {

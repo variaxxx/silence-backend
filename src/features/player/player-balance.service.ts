@@ -1,9 +1,7 @@
 import { Service } from "typedi";
 
-import { HttpException } from "../../common/exceptions";
-import { Prisma } from "../../generated/prisma/client";
-import { PrismaService } from "../../infra/db/prisma.service";
-import { PrismaQueryError } from "../../shared/enums";
+import { Prisma, PrismaQueryError, PrismaService } from "../../infra/db";
+import { HttpException } from "../../lib/exceptions";
 import { PlayerResponse } from "./dto";
 
 @Service()

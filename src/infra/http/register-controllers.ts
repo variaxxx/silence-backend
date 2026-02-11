@@ -3,11 +3,12 @@ import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { Container } from "typedi";
 import { WebSocket as WS } from "ws";
 
-import { EndpointSchemas, HTTP_STATUS_KEY, PREFIX_KEY, RouteConfig, ROUTES_KEY, WS_EVENTS_KEY, WS_ON_CONNECT_KEY, WS_PREFIX_KEY, WsEventConfig, WsOnConnectHandlerConfig } from "../common/decorators";
-import { HTTP_METHOD } from "../common/enums";
-import { HttpException } from "../common/exceptions";
-import { WebSocket, WsMessage } from "../common/interfaces";
-import { Logger } from "./logger";
+import { Logger } from "../../core/logger";
+import { EndpointSchemas, RouteConfig, WsEventConfig, WsOnConnectHandlerConfig } from "../../lib/decorators";
+import { HTTP_METHOD } from "../../lib/enums";
+import { HttpException } from "../../lib/exceptions";
+import { WebSocket, WsMessage } from "../../lib/interfaces";
+import { HTTP_STATUS_KEY, PREFIX_KEY, ROUTES_KEY, WS_EVENTS_KEY, WS_ON_CONNECT_KEY, WS_PREFIX_KEY } from "../../lib/metadata";
 
 interface HandlerConfig {
   wsHandler?: any;

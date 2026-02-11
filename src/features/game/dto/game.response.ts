@@ -1,4 +1,4 @@
-import { $Enums } from "../../../generated/prisma/client";
+import { $Enums } from "../../../infra/db";
 import { PlayerResponse } from "../../player/dto";
 
 export interface GameResponse {

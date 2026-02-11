@@ -1,4 +1,4 @@
-import { Controller, Get } from "../common/decorators";
+import { Controller, Get } from "../lib/decorators";
 
 @Controller()
 export class AppController {

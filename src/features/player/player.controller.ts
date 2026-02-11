@@ -1,11 +1,10 @@
 import { FastifyRequest } from "fastify";
 import Joi from "joi";
 
-import { Controller, Get, HttpCode, Post } from "../../common/decorators";
-import { HttpException } from "../../common/exceptions";
+import { Controller, Get, HttpCode, Post } from "../../lib/decorators";
+import { HttpException } from "../../lib/exceptions";
 import { GameIdParam, GameIdParamSchema } from "../game/dto";
-import { DeductBalanceRequest, DeductBalanceSchema, PlayerIdParam, PlayerIdParamSchema, PlayerResponse, TopupBalanceRequest, TopupBalanceSchema } from "./dto";
-import { CreatePlayerRequest, CreatePlayerSchema } from "./dto/create-player.request";
+import { CreatePlayerRequest, CreatePlayerSchema, DeductBalanceRequest, DeductBalanceSchema, PlayerIdParam, PlayerIdParamSchema, PlayerResponse, TopupBalanceRequest, TopupBalanceSchema } from "./dto";
 import { PlayerBalanceService } from "./player-balance.service";
 import { PlayerService } from "./player.service";
 

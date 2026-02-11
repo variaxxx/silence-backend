@@ -1,7 +1,7 @@
 import { FastifyRequest } from "fastify";
 
-import { Controller, Get, HttpCode, Post } from "../../common/decorators";
-import { HttpException } from "../../common/exceptions";
+import { Controller, Get, HttpCode, Post } from "../../lib/decorators";
+import { HttpException } from "../../lib/exceptions";
 import { GameIdParamSchema, GameResponse } from "./dto";
 import { GameService } from "./game.service";
 

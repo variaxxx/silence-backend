@@ -1,4 +1,4 @@
-export const WS_EVENTS_KEY = Symbol("wsEvents");
+import { WS_EVENTS_KEY } from "../metadata";
 
 export interface WsEventConfig {
   event: string;

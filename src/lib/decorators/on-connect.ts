@@ -1,4 +1,4 @@
-export const WS_ON_CONNECT_KEY = Symbol("wsOnConnect");
+import { WS_ON_CONNECT_KEY } from "../metadata";
 
 export interface WsOnConnectHandlerConfig {
   handlerName: string | symbol;

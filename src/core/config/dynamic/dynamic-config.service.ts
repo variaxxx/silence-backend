@@ -1,7 +1,7 @@
 import { Service } from "typedi";
 
-import { HttpException } from "../../../common/exceptions";
-import { PrismaService } from "../../../infra/db/prisma.service";
+import { PrismaService } from "../../../infra/db";
+import { HttpException } from "../../../lib/exceptions";
 import { Logger } from "../../logger";
 import { DynamicConfig, DynamicConfigValue } from "./dynamic.config";
 import { DynamicConfigSchema } from "./dynamic.schema";
