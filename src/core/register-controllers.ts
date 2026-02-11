@@ -1,12 +1,12 @@
 /* eslint-disable unused-imports/no-unused-vars */
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { Container } from "typedi";
-import { WebSocket } from "ws";
+import { WebSocket as WS } from "ws";
 
-import { EndpointSchemas, HTTP_STATUS_KEY, PREFIX_KEY, RouteConfig, ROUTES_KEY, WS_EVENTS_KEY, WS_PREFIX_KEY, WsEventConfig } from "../common/decorators";
+import { EndpointSchemas, HTTP_STATUS_KEY, PREFIX_KEY, RouteConfig, ROUTES_KEY, WS_EVENTS_KEY, WS_ON_CONNECT_KEY, WS_PREFIX_KEY, WsEventConfig, WsOnConnectHandlerConfig } from "../common/decorators";
 import { HTTP_METHOD } from "../common/enums";
 import { HttpException } from "../common/exceptions";
-import { WsMessage } from "../common/interfaces";
+import { WebSocket, WsMessage } from "../common/interfaces";
 import { Logger } from "./logger";
 
 interface HandlerConfig {
@@ -58,13 +58,11 @@ export function registerControllers(
         }
       }
     } else {
-      const events: WsEventConfig[] = Reflect.getMetadata(WS_EVENTS_KEY, Controller) || [];
-
       const meta = handlersMap.get(wsPrefix);
       if (meta?.wsHandler)
         throw new Error(`Duplicate WS handlers: ${wsPrefix}`);
 
-      const handler = createWsHandler(instance, events);
+      const handler = createWsHandler(Controller, instance);
 
       handlersMap.set(wsPrefix, {
         ...meta,
@@ -107,20 +105,22 @@ function createHttpHandler(
 }
 
 function createWsHandler(
+  Controller: any,
   instance: FastifyInstance,
-  events: WsEventConfig[],
 ) {
-  const eventsMap = new Map(
-    events.map(e => [e.event, e.handlerName]),
-  );
+  const events: WsEventConfig[] = Reflect.getMetadata(WS_EVENTS_KEY, Controller) || [];
+  const eventsMap = new Map(events.map(e => [e.event, e.handlerName]));
+
+  const onConnectHandler: WsOnConnectHandlerConfig = Reflect.getMetadata(WS_ON_CONNECT_KEY, Controller);
   const logger = Container.get(Logger);
 
-  return (socket: WebSocket, req: FastifyRequest): void => {
-    socket.on("open", () => {
-      socket.send(
-        JSON.stringify({ event: "connection-established" } as WsMessage),
-      );
-    });
+  return async (socket: WS, req: FastifyRequest): Promise<void> => {
+    const ws = wrapSocket(socket);
+
+    ws.sendEvent("connection-established");
+
+    if (onConnectHandler)
+      await (instance as any)[onConnectHandler.handlerName](ws);
 
     socket.on("message", (raw): void => {
       try {
@@ -129,36 +129,27 @@ function createWsHandler(
         try {
           json = JSON.parse(raw.toString());
         } catch {
-          return void socket.send(
-            JSON.stringify({
-              event: "error",
-              payload: "Invalid payload",
-            } as WsMessage),
-          );
+          return void ws.sendEvent("error", "Invalid payload");
         }
 
         const handlerName = eventsMap.get(json.event);
 
         if (!handlerName) {
-          return void socket.send(
-            JSON.stringify({
-              event: "error",
-              payload: "Invalid event",
-            } as WsMessage),
-          );
+          return void ws.sendEvent("error", "Invalid event");
         }
 
-        (instance as any)[handlerName](socket, json.payload);
+        (instance as any)[handlerName](ws, json.payload);
       } catch (e) {
         logger.log.error(`WebSocket error: ${e instanceof Error ? e.stack : e}`);
-
-        // socket.send(
-        //   JSON.stringify({
-        //     event: "error",
-        //     payload: "Internal server error",
-        //   } as WsMessage),
-        // );
       }
     });
   };
+}
+
+function wrapSocket(socket: WS): WebSocket {
+  return Object.assign(socket, {
+    sendEvent<T>(event: string, payload?: T) {
+      socket.send(JSON.stringify({ event, payload } as WsMessage));
+    },
+  });
 }
