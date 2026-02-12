@@ -118,10 +118,11 @@ function createWsHandler(
   return async (socket: WS, req: FastifyRequest): Promise<void> => {
     const ws = wrapSocket(socket);
 
-    ws.sendEvent("connection-established");
-
     if (onConnectHandler)
-      await (instance as any)[onConnectHandler.handlerName](ws);
+      await (instance as any)[onConnectHandler.handlerName](ws, req);
+
+    // if (o)
+    // socket.on("close")
 
     socket.on("message", (raw): void => {
       try {

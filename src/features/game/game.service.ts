@@ -1,14 +1,27 @@
 import { Service } from "typedi";
 
 import { FindManyApiResponse } from "../../common/interfaces";
+import { DynamicConfig, DynamicConfigService } from "../../core/config/dynamic";
+import { Logger } from "../../core/logger";
 import { $Enums, Prisma, PrismaQueryError, PrismaService } from "../../infra/db";
 import { HttpException } from "../../lib/exceptions";
-import { GameResponse } from "./dto";
+import { WebSocket } from "../../lib/interfaces";
+import { PlayerService } from "../player/player.service";
+import { GameResponse, GameStatePayload } from "./dto";
 
 @Service()
 export class GameService {
+  private readonly gameIdToSocket = new Map<number, WebSocket>();
+  private readonly socketToGameId = new Map<WebSocket, number>();
+
+  private readonly gameIdToInterval = new Map<number, NodeJS.Timeout>();
+  private readonly gameIdToWatchdog = new Map<number, NodeJS.Timeout>();
+
   constructor(
     private readonly prisma: PrismaService,
+    private readonly logger: Logger,
+    private readonly dynamicConfig: DynamicConfigService,
+    private readonly playerService: PlayerService,
   ) {}
 
   public async create(): Promise<GameResponse> {
@@ -45,25 +58,132 @@ export class GameService {
     };
   }
 
+  public getGameIdByWs(
+    ws: WebSocket,
+  ): number | undefined {
+    return this.socketToGameId.get(ws);
+  }
+
   public async start(
-    id: number,
+    gameId: number,
   ): Promise<GameResponse> {
-    // TODO: start polling
-    return await this.changeStatus(id, "RUNNING");
+    const game = await this.changeStatus(gameId, "RUNNING");
+    this.startPolling(gameId);
+    this.setupWatchdog(gameId);
+    return game;
   }
 
   public async finish(
-    id: number,
+    gameId: number,
   ): Promise<GameResponse> {
-    // TODO: stop polling
-    return await this.changeStatus(id, "FINISHED");
+    const game = await this.changeStatus(gameId, "FINISHED");
+    this.stopPolling(gameId);
+    this.removeWatchdog(gameId);
+    return game;
   }
 
   public async pause(
-    id: number,
+    gameId: number,
   ): Promise<GameResponse> {
-    // TODO: pause polling
-    return await this.changeStatus(id, "WAITING");
+    const game = await this.changeStatus(gameId, "WAITING");
+    this.stopPolling(gameId);
+    this.removeWatchdog(gameId);
+    return game;
+  }
+
+  public async handleConnection(
+    ws: WebSocket,
+    gameId: number,
+  ): Promise<void> {
+    const game = await this.getById(gameId);
+
+    if (!game)
+      ws.close();
+
+    this.gameIdToSocket.set(gameId, ws);
+    this.socketToGameId.set(ws, gameId);
+  }
+
+  public async handleGameState(
+    socket: WebSocket,
+    payload: GameStatePayload,
+  ): Promise<void> {
+    const gameId = this.getGameIdByWs(socket);
+    if (!gameId)
+      return void socket.sendEvent("error", "No connection to the game");
+
+    const threshold = await this.dynamicConfig.getOrThrow(DynamicConfig.VOLUME_THRESHOLD);
+
+    for (const p of payload.players) {
+      if (p.micState >= threshold) {
+        const player = await this.playerService.strike(gameId, p.id);
+        socket.sendEvent("player:strike", player);
+      }
+    }
+
+    await this.setupWatchdog(gameId);
+  }
+
+  private async setupWatchdog(
+    gameId: number,
+  ): Promise<void> {
+    const existingWatchdog = this.gameIdToWatchdog.get(gameId);
+    if (existingWatchdog)
+      clearTimeout(existingWatchdog);
+
+    const timeoutMs = await this.dynamicConfig.getOrThrow(DynamicConfig.GAME_DEATH_TIMEOUT);
+    const newWatchdog = setTimeout(async () => {
+      await this.pause(gameId);
+      this.gameIdToSocket.get(gameId)?.sendEvent("game:paused");
+    }, timeoutMs);
+
+    this.gameIdToWatchdog.set(gameId, newWatchdog);
+  }
+
+  private removeWatchdog(
+    gameId: number,
+  ): void {
+    this.gameIdToWatchdog.delete(gameId);
+  }
+
+  private startPolling(
+    gameId: number,
+  ): void {
+    if (this.gameIdToInterval.has(gameId))
+      return;
+
+    const interval = setInterval(async () => {
+      try {
+        const game = await this.getById(gameId);
+        if (!game)
+          throw new Error("Game not found");
+
+        const socket = this.gameIdToSocket.get(gameId);
+        if (!socket)
+          throw new Error("Socket not found");
+
+        if (game.status === "FINISHED")
+          return this.stopPolling(gameId);
+
+        socket.sendEvent("game:state", game);
+      } catch (e) {
+        this.logger.log.error(`Polling for game ${gameId} failed: ${e instanceof Error ? e.message : e}`);
+        this.stopPolling(gameId);
+      }
+    }, 1000);
+
+    this.gameIdToInterval.set(gameId, interval);
+  }
+
+  private stopPolling(
+    gameId: number,
+  ): void {
+    const interval = this.gameIdToInterval.get(gameId);
+
+    if (!interval)
+      return;
+
+    clearInterval(interval);
   }
 
   private async changeStatus(

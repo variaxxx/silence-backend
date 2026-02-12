@@ -11,6 +11,8 @@ export type JoiType<T extends Joi.Schema>
 
 export enum DynamicConfig {
   VOLUME_THRESHOLD = "VOLUME_THRESHOLD",
+  GAME_DEATH_TIMEOUT = "GAME_DEATH_TIMEOUT",
+  STRIKE_PRICE = "STRIKE_PRICE",
 }
 
 export type DynamicConfigValue<K extends DynamicConfig> = JoiType<(typeof DynamicConfigSchema)[K]>;

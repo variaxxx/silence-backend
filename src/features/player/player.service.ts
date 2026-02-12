@@ -1,5 +1,6 @@
 import { Service } from "typedi";
 
+import { DynamicConfig, DynamicConfigService } from "../../core/config/dynamic";
 import { $Enums, Prisma, PrismaQueryError, PrismaService } from "../../infra/db";
 import { HttpException } from "../../lib/exceptions";
 import { PlayerResponse } from "./dto";
@@ -9,6 +10,7 @@ import { CreatePlayerRequest } from "./dto/create-player.request";
 export class PlayerService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly dynamicConfig: DynamicConfigService,
   ) {}
 
   public async create(
@@ -57,6 +59,27 @@ export class PlayerService {
     playerId: number,
   ): Promise<PlayerResponse> {
     return this.changeStatus(gameId, playerId, "ACTIVE");
+  }
+
+  public async strike(
+    gameId: number,
+    playerId: number,
+  ): Promise<PlayerResponse | null> {
+    const balanceDec = await this.dynamicConfig.getOrThrow(DynamicConfig.STRIKE_PRICE);
+
+    const player = await this.prisma.player.update({
+      where: { id: playerId, gameId },
+      data: { balance: { decrement: balanceDec }, strikes: { increment: 1 } },
+    }).catch((e) => {
+      if (e.code === PrismaQueryError.RecordsNotFound)
+        return null;
+      throw e;
+    });
+
+    if (!player)
+      return null;
+
+    return this.toResponse(player);
   }
 
   private async changeStatus(
