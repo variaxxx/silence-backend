@@ -1,16 +1,13 @@
 import { Service } from "typedi";
 
-import { DynamicConfig, DynamicConfigService } from "../../core/config/dynamic";
-import { $Enums, Prisma, PrismaQueryError, PrismaService } from "../../infra/db";
-import { HttpException } from "../../lib/exceptions";
-import { PlayerResponse } from "./dto";
-import { CreatePlayerRequest } from "./dto/create-player.request";
+import { $Enums, Prisma, PrismaQueryError, PrismaService } from "../../../infra/db";
+import { HttpException } from "../../../lib/exceptions";
+import { CreatePlayerRequest, PlayerResponse } from "../dto";
 
 @Service()
-export class PlayerService {
+export class PlayerRepository {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly dynamicConfig: DynamicConfigService,
   ) {}
 
   public async create(
@@ -34,7 +31,7 @@ export class PlayerService {
     return this.toResponse(player);
   }
 
-  public async getById(
+  public async findById(
     gameId: number,
     id: number,
   ): Promise<PlayerResponse | null> {
@@ -47,42 +44,7 @@ export class PlayerService {
     return this.toResponse(player);
   }
 
-  public async kick(
-    gameId: number,
-    playerId: number,
-  ): Promise<PlayerResponse> {
-    return this.changeStatus(gameId, playerId, "KICKED");
-  }
-
-  public async restore(
-    gameId: number,
-    playerId: number,
-  ): Promise<PlayerResponse> {
-    return this.changeStatus(gameId, playerId, "ACTIVE");
-  }
-
-  public async strike(
-    gameId: number,
-    playerId: number,
-  ): Promise<PlayerResponse | null> {
-    const balanceDec = await this.dynamicConfig.getOrThrow(DynamicConfig.STRIKE_PRICE);
-
-    const player = await this.prisma.player.update({
-      where: { id: playerId, gameId },
-      data: { balance: { decrement: balanceDec }, strikes: { increment: 1 } },
-    }).catch((e) => {
-      if (e.code === PrismaQueryError.RecordsNotFound)
-        return null;
-      throw e;
-    });
-
-    if (!player)
-      return null;
-
-    return this.toResponse(player);
-  }
-
-  private async changeStatus(
+  public async changeStatus(
     gameId: number,
     playerId: number,
     status: $Enums.PlayerStatus,
@@ -90,6 +52,23 @@ export class PlayerService {
     const player = await this.prisma.player.update({
       where: { id: playerId, gameId },
       data: { status },
+    }).catch((e) => {
+      if (e.code === PrismaQueryError.RecordsNotFound)
+        throw new HttpException(404, "Player not found");
+      throw e;
+    });
+
+    return this.toResponse(player);
+  }
+
+  public async countStrike(
+    gameId: number,
+    playerId: number,
+    amount: number,
+  ): Promise<PlayerResponse> {
+    const player = await this.prisma.player.update({
+      where: { id: playerId, gameId, status: "ACTIVE" },
+      data: { balance: { decrement: amount }, strikes: { increment: 1 } },
     }).catch((e) => {
       if (e.code === PrismaQueryError.RecordsNotFound)
         throw new HttpException(404, "Player not found");

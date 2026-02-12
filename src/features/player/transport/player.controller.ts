@@ -1,12 +1,12 @@
 import { FastifyRequest } from "fastify";
 import Joi from "joi";
 
-import { Controller, Get, HttpCode, Post } from "../../lib/decorators";
-import { HttpException } from "../../lib/exceptions";
-import { GameIdParam, GameIdParamSchema } from "../game/dto";
-import { CreatePlayerRequest, CreatePlayerSchema, DeductBalanceRequest, DeductBalanceSchema, PlayerIdParam, PlayerIdParamSchema, PlayerResponse, TopupBalanceRequest, TopupBalanceSchema } from "./dto";
-import { PlayerBalanceService } from "./player-balance.service";
-import { PlayerService } from "./player.service";
+import { Controller, Get, HttpCode, Post } from "../../../lib/decorators";
+import { HttpException } from "../../../lib/exceptions";
+import { GameIdParam, GameIdParamSchema } from "../../game/dto";
+import { PlayerBalanceService } from "../app/player-balance.service";
+import { PlayerService } from "../app/player.service";
+import { CreatePlayerRequest, CreatePlayerSchema, DeductBalanceRequest, DeductBalanceSchema, PlayerIdParam, PlayerIdParamSchema, PlayerResponse, TopupBalanceRequest, TopupBalanceSchema } from "../dto";
 
 @Controller("games/:gameId/players")
 export class PlayerController {
@@ -31,7 +31,7 @@ export class PlayerController {
     req: FastifyRequest<{ Params: PlayerIdParam & GameIdParam }>,
   ): Promise<PlayerResponse> {
     const { playerId, gameId } = req.params;
-    const player = await this.playerService.getById(gameId, playerId);
+    const player = await this.playerService.findById(gameId, playerId);
 
     if (!player)
       throw new HttpException(404, "Player not found");

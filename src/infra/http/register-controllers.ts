@@ -124,25 +124,25 @@ function createWsHandler(
     // if (o)
     // socket.on("close")
 
-    socket.on("message", (raw): void => {
+    socket.on("message", async (raw): Promise<void> => {
       try {
         let json: WsMessage;
 
         try {
           json = JSON.parse(raw.toString());
         } catch {
-          return void ws.sendEvent("error", "Invalid payload");
+          throw new Error("Invalid payload");
         }
 
         const handlerName = eventsMap.get(json.event);
 
-        if (!handlerName) {
-          return void ws.sendEvent("error", "Invalid event");
-        }
+        if (!handlerName)
+          throw new Error("Invalid event");
 
-        (instance as any)[handlerName](ws, json.payload);
+        await (instance as any)[handlerName](ws, json.payload);
       } catch (e) {
-        logger.log.error(`WebSocket error: ${e instanceof Error ? e.stack : e}`);
+        logger.log.error(`WebSocket error: ${e instanceof Error ? e.message : e}`);
+        ws.sendEvent("error", e instanceof Error ? e.message : e);
       }
     });
   };

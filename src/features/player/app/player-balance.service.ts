@@ -1,8 +1,8 @@
 import { Service } from "typedi";
 
-import { Prisma, PrismaQueryError, PrismaService } from "../../infra/db";
-import { HttpException } from "../../lib/exceptions";
-import { PlayerResponse } from "./dto";
+import { Prisma, PrismaQueryError, PrismaService } from "../../../infra/db";
+import { HttpException } from "../../../lib/exceptions";
+import { PlayerResponse } from "../dto";
 
 @Service()
 export class PlayerBalanceService {

@@ -1,9 +1,9 @@
 import { FastifyRequest } from "fastify";
 
-import { Controller, Get, HttpCode, Post } from "../../lib/decorators";
-import { HttpException } from "../../lib/exceptions";
-import { GameIdParamSchema, GameResponse } from "./dto";
-import { GameService } from "./game.service";
+import { Controller, Get, HttpCode, Post } from "../../../lib/decorators";
+import { HttpException } from "../../../lib/exceptions";
+import { GameService } from "../app/game.service";
+import { GameIdParamSchema, GameResponse } from "../dto";
 
 @Controller("games")
 export class GameController {
@@ -19,7 +19,7 @@ export class GameController {
 
   @Get()
   async getMany(): Promise<any> {
-    return await this.service.getMany();
+    return await this.service.findMany();
   }
 
   @Get(":gameId", {
@@ -29,7 +29,7 @@ export class GameController {
     req: FastifyRequest<{ Params: { gameId: number } }>,
   ): Promise<GameResponse> {
     const { gameId } = req.params;
-    const game = await this.service.getById(gameId);
+    const game = await this.service.findById(gameId);
 
     if (!game)
       throw new HttpException(404, "Game not found");
