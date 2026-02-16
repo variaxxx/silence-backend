@@ -4,10 +4,11 @@ import { FindManyApiResponse } from "../../../common/interfaces";
 import { DynamicConfig, DynamicConfigService } from "../../../core/config/dynamic";
 import { WebSocket } from "../../../lib/interfaces";
 import { PlayerService } from "../../player/app/player.service";
-import { GameResponse, GameStatePayload } from "../dto";
+import { CreateGameRequest, GameResponse, GameStatePayload } from "../dto";
 import { GameConnections } from "../infra/game.connections";
 import { GameRepository } from "../infra/game.repository";
 import { GameRuntime } from "../infra/game.runtime";
+import { DamageOverTimeService } from "./dot.service";
 
 @Service()
 export class GameService {
@@ -15,12 +16,17 @@ export class GameService {
     private readonly repo: GameRepository,
     private readonly connections: GameConnections,
     private readonly runtime: GameRuntime,
+    private readonly dot: DamageOverTimeService,
     private readonly dynamicConfig: DynamicConfigService,
     private readonly playerService: PlayerService,
   ) {}
 
-  public async create(): Promise<GameResponse> {
-    return this.repo.create();
+  public async create(
+    payload: CreateGameRequest,
+  ): Promise<GameResponse> {
+    return this.repo.create({
+      isDotEnabled: payload.isDotEnabled,
+    });
   }
 
   public async findById(
@@ -39,6 +45,7 @@ export class GameService {
     const game = await this.repo.changeStatus(gameId, "RUNNING");
     this.connections.setStatus(gameId, "RUNNING");
 
+    this.dot.start(gameId);
     this.runtime.startPolling(gameId);
     this.runtime.setupWatchdog(gameId, async () => {
       try {
@@ -56,6 +63,7 @@ export class GameService {
     const game = await this.repo.changeStatus(gameId, "FINISHED");
     this.connections.setStatus(gameId, "FINISHED");
 
+    this.dot.stop(gameId);
     this.runtime.stopPolling(gameId);
     this.runtime.removeWatchdog(gameId);
 
@@ -71,6 +79,7 @@ export class GameService {
     const game = await this.repo.changeStatus(gameId, "WAITING");
     this.connections.setStatus(gameId, "WAITING");
 
+    this.dot.stop(gameId);
     this.runtime.stopPolling(gameId);
     this.runtime.removeWatchdog(gameId);
 

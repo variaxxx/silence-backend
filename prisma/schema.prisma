@@ -21,7 +21,8 @@ model Game {
   createdAt  DateTime  @default(now()) @map("created_at")
   finishedAt DateTime? @map("finished_at")
 
-  status GameStatus @default(WAITING)
+  status       GameStatus @default(WAITING)
+  isDotEnabled Boolean    @default(true) @map("is_dot_enabled")
 
   players Player[]
 

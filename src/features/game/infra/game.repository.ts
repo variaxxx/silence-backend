@@ -11,8 +11,13 @@ export class GameRepository {
     private readonly prisma: PrismaService,
   ) {}
 
-  public async create(): Promise<GameResponse> {
+  public async create(
+    options?: {
+      isDotEnabled?: boolean;
+    },
+  ): Promise<GameResponse> {
     const game = await this.prisma.game.create({
+      data: { isDotEnabled: options?.isDotEnabled },
       include: { players: true },
     });
 

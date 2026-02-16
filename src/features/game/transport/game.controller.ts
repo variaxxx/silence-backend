@@ -3,7 +3,7 @@ import { FastifyRequest } from "fastify";
 import { Controller, Get, HttpCode, Post } from "../../../lib/decorators";
 import { HttpException } from "../../../lib/exceptions";
 import { GameService } from "../app/game.service";
-import { GameIdParamSchema, GameResponse } from "../dto";
+import { CreateGameRequest, CreateGameSchema, GameIdParamSchema, GameResponse } from "../dto";
 
 @Controller("games")
 export class GameController {
@@ -12,9 +12,13 @@ export class GameController {
   ) {}
 
   @HttpCode(201)
-  @Post()
-  async create(): Promise<GameResponse> {
-    return await this.service.create();
+  @Post("", {
+    schema: { body: CreateGameSchema },
+  })
+  async create(
+    req: FastifyRequest<{ Body: CreateGameRequest }>,
+  ): Promise<GameResponse> {
+    return await this.service.create(req.body);
   }
 
   @Get()

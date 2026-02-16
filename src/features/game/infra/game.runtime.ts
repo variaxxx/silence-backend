@@ -25,7 +25,7 @@ export class GameRuntime {
     if (existingWatchdog)
       clearTimeout(existingWatchdog);
 
-    const timeoutMs = await this.dynamicConfig.getOrThrow(DynamicConfig.GAME_DEATH_TIMEOUT);
+    const timeoutMs = await this.dynamicConfig.getOrThrow(DynamicConfig.GAME_DEATH_TIMEOUT_MS);
     const newWatchdog = setTimeout(onTimeout, timeoutMs);
 
     this.gameIdToWatchdog.set(gameId, newWatchdog);
@@ -43,7 +43,7 @@ export class GameRuntime {
     // if (this.gameIdToInterval.has(gameId))
     //   return;
 
-    const rate = await this.dynamicConfig.getOrThrow(DynamicConfig.STATE_POLLING_RATE);
+    const rate = await this.dynamicConfig.getOrThrow(DynamicConfig.STATE_POLLING_RATE_MS);
 
     const interval = setInterval(async () => {
       try {
