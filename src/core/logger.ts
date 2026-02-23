@@ -1,6 +1,7 @@
 import pino, { Logger as PinoLogger } from "pino";
 import { Service } from "typedi";
 
+import { PgClient } from "../infra/db";
 import { ConfigService } from "./config/env";
 
 @Service()
@@ -9,6 +10,7 @@ export class Logger {
 
   constructor(
     private readonly config: ConfigService,
+    private readonly pg: PgClient,
   ) {
     const level = config.getOrThrow<boolean>("DEBUG") ? "debug" : "info";
 
@@ -23,5 +25,16 @@ export class Logger {
         },
       },
     });
+  }
+
+  public writeLog(msg: string): void {
+    try {
+      this.pg.pool.query(`
+        INSERT INTO logs (message)
+        VALUES ($1)
+        `, [msg]);
+
+      this.log.info(msg);
+    } catch {}
   }
 }

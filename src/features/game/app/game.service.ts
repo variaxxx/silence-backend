@@ -2,6 +2,7 @@ import { Service } from "typedi";
 
 import { FindManyApiResponse } from "../../../common/interfaces";
 import { DynamicConfig, DynamicConfigService } from "../../../core/config/dynamic";
+import { Logger } from "../../../core/logger";
 import { WebSocket } from "../../../lib/interfaces";
 import { PlayerService } from "../../player/app/player.service";
 import { CreateGameRequest, GameResponse, GameStatePayload } from "../dto";
@@ -19,14 +20,19 @@ export class GameService {
     private readonly dot: DamageOverTimeService,
     private readonly dynamicConfig: DynamicConfigService,
     private readonly playerService: PlayerService,
+    private readonly logger: Logger,
   ) {}
 
   public async create(
     payload: CreateGameRequest,
   ): Promise<GameResponse> {
-    return this.repo.create({
+    const game = await this.repo.create({
       isDotEnabled: payload.isDotEnabled,
     });
+
+    this.logger.writeLog(`Game ${game.gameId} was created`);
+
+    return game;
   }
 
   public async findById(
@@ -54,6 +60,8 @@ export class GameService {
       } catch {}
     });
 
+    this.logger.writeLog(`Game ${gameId} was started`);
+
     return game;
   }
 
@@ -66,6 +74,8 @@ export class GameService {
     this.dot.stop(gameId);
     this.runtime.stopPolling(gameId);
     this.runtime.removeWatchdog(gameId);
+
+    this.logger.writeLog(`Game ${gameId} was finished`);
 
     return game;
   }
@@ -82,6 +92,8 @@ export class GameService {
     this.dot.stop(gameId);
     this.runtime.stopPolling(gameId);
     this.runtime.removeWatchdog(gameId);
+
+    this.logger.writeLog(`Game ${gameId} was paused`);
 
     return game;
   }

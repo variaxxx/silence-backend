@@ -1,5 +1,6 @@
 import { Service } from "typedi";
 
+import { Logger } from "../../../core/logger";
 import { Prisma, PrismaQueryError, PrismaService } from "../../../infra/db";
 import { HttpException } from "../../../lib/exceptions";
 import { PlayerResponse } from "../dto";
@@ -8,6 +9,7 @@ import { PlayerResponse } from "../dto";
 export class PlayerBalanceService {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly logger: Logger,
   ) {}
 
   public async topup(
@@ -18,7 +20,9 @@ export class PlayerBalanceService {
     if (amount < 0)
       throw new HttpException(400, "Top up amount can`t be negative");
 
-    return this.changeBalance(gameId, playerId, amount);
+    const player = await this.changeBalance(gameId, playerId, amount);
+    this.logger.writeLog(`Player ${playerId} balance has been replenished by ${amount}}`);
+    return player;
   }
 
   public async deduct(
@@ -29,7 +33,9 @@ export class PlayerBalanceService {
     if (amount < 0)
       throw new HttpException(400, "Deduct amount can`t be negative");
 
-    return this.changeBalance(gameId, playerId, -amount);
+    const player = await this.changeBalance(gameId, playerId, -amount);
+    this.logger.writeLog(`Player ${playerId} balance has been debited by ${amount}`);
+    return player;
   }
 
   private async changeBalance(

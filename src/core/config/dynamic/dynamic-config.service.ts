@@ -105,6 +105,7 @@ export class DynamicConfigService {
     });
 
     this.cache.set(key, validated.value);
+    this.logger.writeLog(`Variable ${key} was changed to ${validated.value}`);
   }
 
   public async setMany(
@@ -134,6 +135,7 @@ export class DynamicConfigService {
       });
 
       this.cache.set(key, validated.value);
+      this.logger.writeLog(`Variable ${key} was changed to ${validated.value}`);
     }
 
     await this.prisma.$transaction(
