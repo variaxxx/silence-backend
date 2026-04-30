@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - backend
+    healthcheck:
+      test: [CMD-SHELL, "su -c 'pg_isready -U postgres' postgres"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    ports:
+      - "5433:5432"
+
+  server:
+    container_name: silence-backend
+    build: .
+    depends_on:
+      - postgres
+    env_file:
+      - .env.production
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    networks:
+      - backend
+    healthcheck:
+      test: [CMD-SHELL, "curl -f http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+networks:
+  backend:

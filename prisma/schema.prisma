@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Config {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_config")
+}
+
+model Game {
+  id Int @id @default(autoincrement())
+
+  createdAt  DateTime  @default(now()) @map("created_at")
+  finishedAt DateTime? @map("finished_at")
+
+  status       GameStatus @default(WAITING)
+  isDotEnabled Boolean    @default(true) @map("is_dot_enabled")
+
+  players Player[]
+
+  @@map("games")
+}
+
+model Player {
+  id Int @id @default(autoincrement())
+
+  gameId Int
+  game   Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  name    String
+  micId   Int          @map("mic_id")
+  strikes Int          @default(0)
+  balance Int          @default(0)
+  status  PlayerStatus @default(ACTIVE)
+
+  @@unique([gameId, micId])
+  @@map("players")
+}
+
+model Log {
+  id Int @id @default(autoincrement())
+
+  createdAt DateTime @default(now()) @map("created_at")
+  message   String
+
+  @@map("logs")
+}
+
+enum GameStatus {
+  WAITING
+  RUNNING
+  FINISHED
+}
+
+enum PlayerStatus {
+  ACTIVE
+  KICKED
+}
